@@ -11,9 +11,6 @@ on the device.
 <img src="../docs/screenshots/settings.png" width="230" alt="Settings" />
 </div>
 
-> The code in this repository is AI-generated. See the note in the
-> [root README](../README.md).
-
 ## Layout
 
 ```
