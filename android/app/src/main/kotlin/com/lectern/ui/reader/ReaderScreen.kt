@@ -126,6 +126,17 @@ fun ReaderScreen(
         if (engine.playing) hintShown = false
     }
 
+    // Said once, while the words are moving and the claim can be checked, then
+    // never again on this device.
+    var pivotHint by remember { mutableStateOf(false) }
+    LaunchedEffect(engine.playing) {
+        if (!engine.playing || settings.seenPivotHint) return@LaunchedEffect
+        pivotHint = true
+        delay(7_000)
+        pivotHint = false
+        vm.markPivotHintSeen()
+    }
+
     // Full screen, if asked for: the status and navigation bars step aside
     // while a book is open, and come back when it closes.
     if (settings.fullScreen) {
@@ -235,7 +246,7 @@ fun ReaderScreen(
                 if (settings.contextLine) {
                     ContextLine(vm, Modifier.padding(horizontal = 20.dp, vertical = 4.dp))
                 }
-                Hint(engine, hintShown, settings.tapZones)
+                Hint(engine, hintShown, settings.tapZones, pivotHint)
                 Scrubber(engine, Modifier.padding(horizontal = 20.dp, vertical = 4.dp))
                 Column(
                     modifier = Modifier
@@ -327,7 +338,24 @@ private enum class ReaderSheet { None, Chapters, Paragraph, Bookmarks }
 
 /** What the stage says when nothing is moving. */
 @Composable
-private fun Hint(engine: ReaderEngine, hintShown: Boolean, tapZones: Boolean) {
+private fun Hint(
+    engine: ReaderEngine,
+    hintShown: Boolean,
+    tapZones: Boolean,
+    pivotHint: Boolean = false,
+) {
+    if (pivotHint && engine.playing) {
+        Text(
+            text = "The marked letter stays in one column. Rest your eyes there.",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+        )
+        return
+    }
     val text = when (engine.stoppedBecause) {
         StopReason.End -> "End of the book. Tap to read it again."
         StopReason.Break -> "Break. Tap when you are ready."

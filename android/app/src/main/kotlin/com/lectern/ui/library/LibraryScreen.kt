@@ -177,6 +177,12 @@ fun LibraryScreen(
                 }
             }
 
+            if (shelf.isEmpty() && !settings.hasReadSomething) {
+                item(span = { GridItemSpan(maxLineSpan) }, key = "welcome") {
+                    Welcome(settings = settings, onReadSample = vm::importSample)
+                }
+            }
+
             item(span = { GridItemSpan(maxLineSpan) }, key = "open") {
                 OpenBookCard(
                     busy = vm.importing,
@@ -184,6 +190,16 @@ fun LibraryScreen(
                     onPaste = { pasting = true },
                     onLink = { linking = true },
                 )
+            }
+
+            if (shelf.isEmpty() && settings.hasReadSomething) {
+                item(span = { GridItemSpan(maxLineSpan) }, key = "cleared") {
+                    EmptyNote(
+                        line = "Nothing on the shelf.",
+                        action = "Read the sample again",
+                        onAction = vm::importSample,
+                    )
+                }
             }
 
             if (shelf.isNotEmpty()) {
@@ -195,13 +211,22 @@ fun LibraryScreen(
                         onSelect = { filter = it },
                     )
                 }
-                item(span = { GridItemSpan(maxLineSpan) }, key = "shelf-label") {
+                if (books.isNotEmpty()) item(span = { GridItemSpan(maxLineSpan) }, key = "shelf-label") {
                     Text(
                         text = shelfLabel(books.size, filter),
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.padding(vertical = 4.dp),
                     )
+                }
+                if (books.isEmpty()) {
+                    item(span = { GridItemSpan(maxLineSpan) }, key = "no-matches") {
+                        EmptyNote(
+                            line = emptyFilterLine(filter),
+                            action = "Show all books",
+                            onAction = { filter = ShelfFilter.All },
+                        )
+                    }
                 }
                 items(books, key = { it.id }) { entry ->
                     ShelfCard(
@@ -313,6 +338,33 @@ fun LibraryScreen(
             },
         )
     }
+}
+
+/** A quiet line for a shelf, or a filter, with nothing behind it. */
+@Composable
+private fun EmptyNote(line: String, action: String, onAction: () -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 20.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(
+            text = line,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        TextButton(onClick = onAction) { Text(action) }
+    }
+}
+
+private fun emptyFilterLine(filter: ShelfFilter): String = when (filter) {
+    ShelfFilter.Reading -> "No book is under way."
+    ShelfFilter.Finished -> "You have not finished a book yet."
+    ShelfFilter.Archived -> "Nothing is archived."
+    is ShelfFilter.Tagged -> "Nothing is tagged \"${filter.tag}\"."
+    ShelfFilter.All -> "Nothing on the shelf."
 }
 
 @Composable

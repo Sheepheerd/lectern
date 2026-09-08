@@ -15,6 +15,8 @@ import com.lectern.core.UnreadableDocument
 import com.lectern.core.displayName
 import com.lectern.core.extractDocument
 import com.lectern.core.fetchArticle
+import com.lectern.core.SAMPLE_TITLE
+import com.lectern.core.sampleBook
 import com.lectern.core.sectionsFromText
 import com.lectern.core.titleFromFileName
 import com.lectern.core.tokenize
@@ -34,6 +36,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.UnknownHostException
+
+private const val SAMPLE_SOURCE = "Lectern's own sample"
 
 class LecternViewModel(app: Application) : AndroidViewModel(app) {
 
@@ -125,6 +129,16 @@ class LecternViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
+    /** The built-in piece, so a first read needs no file and no network. */
+    fun importSample() {
+        val existing = library.shelf.value.firstOrNull { it.source == SAMPLE_SOURCE }
+        if (existing != null) {
+            requestOpen(existing.id)
+            return
+        }
+        openNew(SAMPLE_TITLE, Document(sampleBook()), source = SAMPLE_SOURCE)
+    }
+
     fun importPastedText(text: String) {
         val trimmed = text.trim()
         if (trimmed.isEmpty()) return
@@ -176,6 +190,10 @@ class LecternViewModel(app: Application) : AndroidViewModel(app) {
         engine.chapterStarts = book.chapters.map { it.start }
         engine.load(book.tokens, entry.index)
         current = entry
+        // The welcome has done its job once a book is open.
+        if (!settingsStore.current.hasReadSomething) {
+            settingsStore.update { it.copy(hasReadSomething = true) }
+        }
         // A book can keep its own pace.
         val settingsNow = settingsStore.current
         engine.setWpm(entry.wpm?.takeIf { settingsNow.perBookSpeed } ?: settingsNow.wpm)
@@ -314,6 +332,12 @@ class LecternViewModel(app: Application) : AndroidViewModel(app) {
     fun setSentencePause(total: Float) {
         val applied = engine.setSentencePause(total)
         settingsStore.update { it.copy(sentencePause = applied) }
+    }
+
+    fun markPivotHintSeen() {
+        if (!settingsStore.current.seenPivotHint) {
+            settingsStore.update { it.copy(seenPivotHint = true) }
+        }
     }
 
     /** Index of the chapter the reader is currently inside. */

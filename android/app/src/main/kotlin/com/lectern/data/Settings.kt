@@ -100,6 +100,12 @@ data class AppSettings(
 
     // Shelf
     val shelfOrder: ShelfOrder = ShelfOrder.Recent,
+
+    // First run
+    /** A book has been opened at least once, so the welcome has done its job. */
+    val hasReadSomething: Boolean = false,
+    /** The one-time line explaining the pivot letter has been shown. */
+    val seenPivotHint: Boolean = false,
 )
 
 /**
@@ -141,6 +147,8 @@ class Settings(context: Context) {
         dynamicColor = prefs.getBoolean("dynamicColor", true),
         palette = enumOr("palette", Palette.Lamp),
         shelfOrder = enumOr("shelfOrder", ShelfOrder.Recent),
+        hasReadSomething = prefs.getBoolean("hasReadSomething", false),
+        seenPivotHint = prefs.getBoolean("seenPivotHint", false),
     )
 
     fun update(transform: (AppSettings) -> AppSettings) {
@@ -172,6 +180,8 @@ class Settings(context: Context) {
             .putBoolean("dynamicColor", next.dynamicColor)
             .putString("palette", next.palette.name)
             .putString("shelfOrder", next.shelfOrder.name)
+            .putBoolean("hasReadSomething", next.hasReadSomething)
+            .putBoolean("seenPivotHint", next.seenPivotHint)
             .apply()
         _state.value = next
     }

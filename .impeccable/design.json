@@ -1,0 +1,286 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-08T19:59:09Z",
+  "title": "Design System: Lectern",
+  "extensions": {
+    "colorMeta": {
+      "amber": {
+        "role": "primary",
+        "displayName": "Reading Amber",
+        "canonical": "#ffb527",
+        "tonalRamp": [
+          "#2a1c00",
+          "#4a3200",
+          "#6b4800",
+          "#8c5f00",
+          "#ad7600",
+          "#cf8f00",
+          "#ffb527",
+          "#ffd9a0"
+        ]
+      },
+      "amber-deep": {
+        "role": "primary",
+        "displayName": "Deep Amber",
+        "canonical": "#7a5200",
+        "tonalRamp": [
+          "#1f1400",
+          "#3a2700",
+          "#553900",
+          "#7a5200",
+          "#9c6b00",
+          "#c08600",
+          "#e2a200",
+          "#ffdda6"
+        ]
+      },
+      "near-black": {
+        "role": "neutral",
+        "displayName": "Near Black",
+        "canonical": "#171310",
+        "tonalRamp": [
+          "#0b0908",
+          "#110e0c",
+          "#171310",
+          "#1e1a14",
+          "#241e16",
+          "#2a2318",
+          "#332b1f",
+          "#3b3327"
+        ]
+      },
+      "surface-raised": {
+        "role": "neutral",
+        "displayName": "Raised Surface",
+        "canonical": "#211c15",
+        "tonalRamp": [
+          "#110e0b",
+          "#1a1610",
+          "#211c15",
+          "#2a2318",
+          "#332b1f",
+          "#3d3425",
+          "#4a3f2c",
+          "#5a4d36"
+        ]
+      },
+      "parchment": {
+        "role": "neutral",
+        "displayName": "Parchment",
+        "canonical": "#f4eedd",
+        "tonalRamp": [
+          "#3b3527",
+          "#5a5240",
+          "#7f755f",
+          "#ab9f85",
+          "#c9bfa6",
+          "#e0d8c4",
+          "#f4eedd",
+          "#fbf6ec"
+        ]
+      },
+      "muted-ink": {
+        "role": "neutral",
+        "displayName": "Muted Ink",
+        "canonical": "#ab9f85"
+      },
+      "faint-ink": {
+        "role": "neutral",
+        "displayName": "Faint Ink",
+        "canonical": "#7f755f"
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#3b3327"
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper",
+        "canonical": "#fbf6ec"
+      },
+      "paper-ink": {
+        "role": "neutral",
+        "displayName": "Paper Ink",
+        "canonical": "#211c15"
+      }
+    },
+    "typographyMeta": {
+      "stage": {
+        "displayName": "Stage",
+        "purpose": "The flashed word or chunk. Size is computed from the chunk so the pivot column never moves."
+      },
+      "display": {
+        "displayName": "Display",
+        "purpose": "The web wordmark only."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Book titles, sheet headings, the shelf wordmark."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Settings descriptions and the paragraph view."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Hints, time remaining, chapter meta. The only tracked type."
+      }
+    },
+    "shadows": [
+      {
+        "name": "material-only",
+        "value": "inherited from Material 3 components",
+        "purpose": "Sheets, dialogs and menus bring their own. Nothing in the app authors a shadow, and the stage carries none."
+      }
+    ],
+    "motion": [
+      {
+        "name": "chrome-fade",
+        "value": "animateFloatAsState, 1.0 -> 0.4 alpha",
+        "purpose": "The reader's controls recede while words are moving and return on pause. The system's one authored moment."
+      },
+      {
+        "name": "screen-crossfade",
+        "value": "Crossfade between destinations",
+        "purpose": "Shelf to reader to settings; no slide, no shared element."
+      },
+      {
+        "name": "word-cadence",
+        "value": "60000 / wpm ms per word, scaled by weight and punctuation",
+        "purpose": "Not decoration: the timing is the product."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "shelf-column",
+        "value": "320dp minimum per grid column"
+      },
+      {
+        "name": "reader-landscape",
+        "value": "width > height splits the reader into stage and controls"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Reading Stage",
+      "kind": "custom",
+      "refersTo": "stage-rail",
+      "description": "Two hairline rails with a centre tick; the pivot letter of the word sits on the column.",
+      "html": "<div class=\"ds-stage\"><div class=\"ds-rail ds-rail-top\"></div><div class=\"ds-word\"><span class=\"ds-pre\">rea</span><span class=\"ds-pivot\">d</span><span class=\"ds-post\">ing</span></div><div class=\"ds-rail ds-rail-bottom\"></div></div>",
+      "css": ".ds-stage{background:#171310;padding:24px 0;font-family:Menlo,ui-monospace,monospace}.ds-rail{position:relative;width:88%;margin:0 auto;border-top:1px solid #3b3327;height:9px}.ds-rail::after{content:'';position:absolute;left:50%;width:1px;height:9px;background:#7f755f}.ds-rail-bottom{border-top:none;border-bottom:1px solid #3b3327}.ds-rail-bottom::after{bottom:0}.ds-word{display:grid;grid-template-columns:1fr auto 1fr;align-items:baseline;font-size:56px;color:#f4eedd;padding:28px 0;white-space:pre}.ds-pre{text-align:right}.ds-pivot{color:#ffb527}.ds-post{text-align:left}"
+    },
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "One per screen: read the sample, read this, play.",
+      "html": "<button class=\"ds-btn-primary\">Read the rest</button>",
+      "css": ".ds-btn-primary{background:#ffb527;color:#171310;font-family:Menlo,ui-monospace,monospace;font-size:14px;border:none;border-radius:8px;padding:12px 24px;cursor:pointer;transition:filter .16s ease}.ds-btn-primary:hover{filter:brightness(1.08)}.ds-btn-primary:focus-visible{outline:2px solid #ffb527;outline-offset:2px}"
+    },
+    {
+      "name": "Text Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Every secondary action. Takes the ink colour so the accent stays rare.",
+      "html": "<button class=\"ds-btn-text\">Paste text</button>",
+      "css": ".ds-btn-text{background:none;color:#f4eedd;font-family:Menlo,ui-monospace,monospace;font-size:14px;border:none;border-radius:8px;padding:10px 16px;cursor:pointer}.ds-btn-text:hover{background:rgba(244,238,221,.08)}.ds-btn-text:focus-visible{outline:2px solid #ffb527;outline-offset:2px}"
+    },
+    {
+      "name": "Book Card",
+      "kind": "card",
+      "refersTo": "card-outlined",
+      "description": "A book on the shelf: cover, title, progress line, progress bar, overflow.",
+      "html": "<div class=\"ds-book\"><div class=\"ds-cover\">L</div><div class=\"ds-book-text\"><div class=\"ds-book-title\">The Lamplighter</div><div class=\"ds-book-meta\">33% \\u00b7 under a minute left</div><div class=\"ds-progress\"><i style=\"width:33%\"></i></div></div></div>",
+      "css": ".ds-book{display:flex;gap:12px;align-items:center;background:#1e1a14;border:1px solid #3b3327;border-radius:8px;padding:12px 20px;font-family:Menlo,ui-monospace,monospace}.ds-cover{width:44px;height:62px;border-radius:4px;background:#332b1f;color:#ab9f85;display:flex;align-items:center;justify-content:center;font-size:16px}.ds-book-text{flex:1;display:flex;flex-direction:column;gap:6px}.ds-book-title{color:#f4eedd;font-size:16px}.ds-book-meta{color:#ab9f85;font-size:12px}.ds-progress{height:3px;background:#3b3327;border-radius:2px}.ds-progress i{display:block;height:3px;background:#ffb527;border-radius:2px}"
+    },
+    {
+      "name": "Continue Card",
+      "kind": "card",
+      "refersTo": "card-continue",
+      "description": "Resumes the last unfinished book. The only filled accent container on the shelf.",
+      "html": "<div class=\"ds-continue\"><div class=\"ds-continue-text\"><div class=\"ds-continue-kicker\">Continue reading</div><div class=\"ds-continue-title\">The Lamplighter</div><div class=\"ds-continue-meta\">33% \\u00b7 under a minute left</div></div><svg width=\"28\" height=\"28\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M8 5v14l11-7z\" fill=\"currentColor\"/></svg></div>",
+      "css": ".ds-continue{display:flex;align-items:center;gap:16px;background:#5a3e00;color:#ffdda6;border-radius:8px;padding:16px;font-family:Menlo,ui-monospace,monospace}.ds-continue-text{flex:1;display:flex;flex-direction:column;gap:6px}.ds-continue-kicker{font-size:12px}.ds-continue-title{font-size:16px}.ds-continue-meta{font-size:12px}"
+    },
+    {
+      "name": "Filter Chip",
+      "kind": "chip",
+      "refersTo": "card-outlined",
+      "description": "Shelf filters and every either-or setting.",
+      "html": "<span class=\"ds-chip ds-chip-on\">All</span><span class=\"ds-chip\">Reading</span>",
+      "css": ".ds-chip{display:inline-block;font-family:Menlo,ui-monospace,monospace;font-size:13px;color:#f4eedd;border:1px solid #3b3327;border-radius:8px;padding:8px 14px;margin-right:8px;cursor:pointer}.ds-chip-on{background:#4a3d26;border-color:transparent}.ds-chip:focus-visible{outline:2px solid #ffb527;outline-offset:2px}"
+    },
+    {
+      "name": "Transport",
+      "kind": "custom",
+      "refersTo": "transport-play",
+      "description": "Previous sentence, play or pause, next sentence. The play control is the one circle in the system.",
+      "html": "<div class=\"ds-transport\"><button class=\"ds-skip\" aria-label=\"Previous sentence\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\"><path d=\"M6 6h2v12H6zm3.5 6 8.5 6V6z\" fill=\"currentColor\"/></svg></button><button class=\"ds-play\" aria-label=\"Play\"><svg width=\"30\" height=\"30\" viewBox=\"0 0 24 24\"><path d=\"M8 5v14l11-7z\" fill=\"currentColor\"/></svg></button><button class=\"ds-skip\" aria-label=\"Next sentence\"><svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\"><path d=\"M16 6h2v12h-2zM6 18l8.5-6L6 6z\" fill=\"currentColor\"/></svg></button></div>",
+      "css": ".ds-transport{display:flex;align-items:center;gap:20px;background:#171310;padding:12px}.ds-skip{background:none;border:none;color:#f4eedd;cursor:pointer;padding:12px;border-radius:999px}.ds-skip:hover{background:rgba(244,238,221,.08)}.ds-play{width:64px;height:64px;border:none;border-radius:999px;background:#ffb527;color:#171310;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:filter .16s ease}.ds-play:hover{filter:brightness(1.08)}.ds-play:focus-visible{outline:2px solid #ffb527;outline-offset:3px}"
+    },
+    {
+      "name": "Setting Row",
+      "kind": "custom",
+      "refersTo": "card-outlined",
+      "description": "Title, live value, control, and a description in the product's voice.",
+      "html": "<div class=\"ds-setting\"><div class=\"ds-setting-head\"><span class=\"ds-setting-title\">Speed</span><span class=\"ds-setting-value\">300 wpm</span></div><input class=\"ds-slider\" type=\"range\" min=\"60\" max=\"1200\" step=\"25\" value=\"300\"><div class=\"ds-setting-desc\">Starting speed for a new book. The \\u00b1 buttons in the reader change it too.</div></div>",
+      "css": ".ds-setting{font-family:Menlo,ui-monospace,monospace;padding:8px 24px;color:#f4eedd}.ds-setting-head{display:flex;align-items:center;justify-content:space-between}.ds-setting-title{font-size:16px}.ds-setting-value{font-size:13px;color:#ffb527}.ds-slider{width:100%;accent-color:#ffb527;margin:8px 0}.ds-setting-desc{font-size:12px;color:#ab9f85}"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Reading Rail",
+    "overview": "Everything in Lectern is arranged around one vertical column of screen. Two hairlines and a tick mark it, the pivot letter of every word lands on it, and no other element is allowed to compete with it while words are moving. The rail is not decoration; it is the product's mechanism drawn at full size.\n\nAround that column the interface is deliberately thin. Type is monospace so every word occupies a predictable width, surfaces separate by tone rather than by ornament, and colour appears in one place at a time. When reading starts, the controls fade to 40% and the word is the only thing at full strength.\n\nTwo implementations share this world: Material 3 and Material You on Android, a hand-written CSS world on the web. The rail, the pivot, the fade and the monospace measure are what make them the same product.",
+    "keyCharacteristics": [
+      "One reading column, marked by rails and a tick, that nothing else may cross",
+      "Monospace everywhere, so word width is predictable and numbers align",
+      "One accent at a time, spent on the pivot letter first",
+      "Chrome that fades to 40% while reading and returns on pause",
+      "Depth by tone, never by ornament",
+      "Dark is the working default; light is a real scheme, not an inversion"
+    ],
+    "rules": [
+      {
+        "name": "The One Accent Rule",
+        "body": "Amber belongs to the pivot letter first. Any other use must be one element the eye can find without searching. Two amber elements competing on one screen is a defect.",
+        "section": "colors"
+      },
+      {
+        "name": "The Warm Neutral Rule",
+        "body": "Greys are warm, held in the amber family. A neutral grey next to this amber reads as a bug, not a choice.",
+        "section": "colors"
+      },
+      {
+        "name": "The Fixed Column Rule",
+        "body": "The pivot letter's centre sits at 50% of the stage width. Type size is derived from the chunk, never the other way round.",
+        "section": "typography"
+      },
+      {
+        "name": "The Italic Title Rule",
+        "body": "A book's own title is italic in the reader's top bar. It is the one italic in the system.",
+        "section": "typography"
+      },
+      {
+        "name": "The Undisturbed Stage Rule",
+        "body": "The reading surface carries no elevation, no border and no card. It is the page ground with two hairlines on it.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do keep the pivot centred at 50% of the stage and derive type size from the chunk, shrinking to fit rather than moving the column.",
+      "Do fade the reader's chrome to 40% while words are moving, and bring it back at full strength on pause.",
+      "Do spend amber on one element per screen, the pivot first.",
+      "Do state a value in numbers next to its control (300 wpm, \\u00d72.7, 2 words), in monospace so it does not shift as it changes.",
+      "Do use Material components as they come and theme them through colour roles, so Material You and the four palettes both work untouched.",
+      "Do give every setting a description in the product's voice: what it does, and why a reader would want it."
+    ],
+    "donts": [
+      "Don't draw a shadow, a border or a card around the reading stage.",
+      "Don't put a second accent-coloured element beside the pivot while reading.",
+      "Don't introduce a proportional face for the stage without keeping the fixed-column guarantee.",
+      "Don't use a neutral grey: greys here are warm and belong to the ground.",
+      "Don't add a bottom navigation bar. Three destinations on one back stack is the whole structure.",
+      "Don't interrupt reading with a dialog. Transient feedback is a snackbar; anything larger waits for a pause."
+    ]
+  }
+}

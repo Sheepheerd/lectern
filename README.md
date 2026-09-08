@@ -20,6 +20,7 @@
   <a href="https://heerd.dev/lectern/"><img src="https://img.shields.io/badge/web-Vite-646CFF?logo=vite&logoColor=white" alt="Web"></a>
   <a href="android/"><img src="https://img.shields.io/badge/Android-Kotlin%20%2B%20Compose-3DDC84?logo=android&logoColor=white" alt="Android"></a>
   <a href="android/"><img src="https://img.shields.io/badge/minSdk-26-3DDC84" alt="minSdk 26"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/licence-GPL--3.0-blue" alt="GPL-3.0"></a>
 </p>
 
 <p align="center">
@@ -111,3 +112,11 @@ The one exception is the Android app's "read a link", which fetches the page you
 ## Ideas
 
 [IDEAS.md](IDEAS.md) holds what is not built yet. The main one is a reading trainer: measure the speed at which your comprehension still holds, raise it a little at a time, and plot the curve.
+
+## Licence
+
+GPL-3.0-or-later. See [LICENSE](LICENSE). Forks stay open; the app stays free,
+with no paid tier and no ads.
+
+Atkinson Hyperlegible is © Braille Institute of America, used under the SIL Open
+Font License 1.1 (`android/app/src/main/assets/atkinson_hyperlegible_OFL.txt`).

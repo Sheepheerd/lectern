@@ -386,6 +386,14 @@ fun SettingsScreen(vm: LecternViewModel, onBack: () -> Unit) {
 
             item {
                 InfoRow(
+                    title = "Licence",
+                    body = "GPL-3.0-or-later. Free and open source; the code is at " +
+                        "github.com/Sheepheerd/lectern.",
+                )
+            }
+
+            item {
+                InfoRow(
                     title = "Atkinson Hyperlegible",
                     body = "© Braille Institute of America, used under the SIL Open Font " +
                         "License 1.1.",
