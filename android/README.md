@@ -79,6 +79,31 @@ Settings live in SharedPreferences rather than DataStore. The theme has to be
 known on the first frame, and a synchronous read avoids painting the wrong one
 and swapping it a moment later.
 
+## Releases
+
+Tagging `vX.Y.Z` builds a signed APK and publishes it as a GitHub release, which
+is what [Obtainium](https://github.com/ImranR98/Obtainium) reads:
+
+```sh
+git tag -a v0.1.1 -m "Lectern 0.1.1"
+git push origin v0.1.1
+```
+
+The tag is the version. The workflow passes it to Gradle as `-PappVersion` and
+derives `versionCode` from it, so 1.2.3 becomes 10203 and every release counts
+higher than the last. `workflow_dispatch` builds a version you type, for testing
+the pipeline without a tag.
+
+One key signs every build, local or CI, so an APK from your machine installs
+over one from Actions. The keystore lives outside the repository; its path and
+passwords are in `android/keystore.properties`, which is gitignored, and a copy
+is in the repository secrets `KEYSTORE_BASE64`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`
+and `KEY_PASSWORD`. Back the keystore up. Without it no later build can update
+an install, and every user has to uninstall first.
+
+Building without a key still works. The APK comes out unsigned, which is fine
+for inspection and useless for installing.
+
 ## Build
 
 Needs JDK 17+ (Android Studio's bundled JBR works) and an Android SDK. The Gradle
