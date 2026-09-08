@@ -27,7 +27,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/branding/hero.png" alt="Lectern on Android">
+  <img src="docs/branding/web.png" alt="Lectern on Android">
 </p>
 
 ---
@@ -50,9 +50,7 @@ Open `http://localhost:5173`. `nix develop` provides Node if you use Nix.
 The Android app builds with the Gradle wrapper. It needs JDK 17+ and an Android SDK:
 
 ```bash
-cd android
-export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
-./gradlew installDebug
+scripts/android.sh
 ```
 
 To install rather than build: grab the APK from the [latest release](https://github.com/Sheepheerd/lectern/releases/latest), or use the Obtainium badge above and let it track updates for you.
