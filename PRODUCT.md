@@ -158,7 +158,8 @@ established:
   the type scale is Material's, in `sp`, so system font size is respected
   outside the stage.
 - The pivot letter can be marked by colour, underline, bold or not at all, for
-  readers who find a coloured letter distracting.
+  readers who find a coloured letter distracting. When marked by colour, its shade
+  can be adjusted lighter or darker against the theme accent.
 - Four palettes cover OLED black and a dim red night mode; dark theme is a
   designed scheme, not an inversion.
 - Motion is central to the product, so any future work must offer a way to read

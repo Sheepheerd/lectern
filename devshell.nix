@@ -16,22 +16,22 @@ devshell.mkShell {
   motd = ''
     Entered the Android app development environment.
   '';
-  env = [
-    {
-      name = "ANDROID_HOME";
-      value = "${android-sdk}/share/android-sdk";
-    }
-    {
-      name = "ANDROID_SDK_ROOT";
-      value = "${android-sdk}/share/android-sdk";
-    }
-    {
-      name = "JAVA_HOME";
-      value = jdk.home;
-    }
-  ];
+  # env = [
+  #   {
+  #     name = "ANDROID_HOME";
+  #     value = "${android-sdk}/share/android-sdk";
+  #   }
+  #   {
+  #     name = "ANDROID_SDK_ROOT";
+  #     value = "${android-sdk}/share/android-sdk";
+  #   }
+  #   {
+  #     name = "JAVA_HOME";
+  #     value = jdk.home;
+  #   }
+  # ];
   packages = [
-    android-sdk
+    # android-sdk
     gradle
     jdk17_headless
 

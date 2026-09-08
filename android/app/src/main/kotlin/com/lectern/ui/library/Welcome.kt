@@ -85,6 +85,7 @@ fun Welcome(
                 font = settings.font,
                 wordSize = settings.wordSize,
                 pivotStyle = settings.pivotStyle,
+                pivotShade = settings.pivotShade,
                 showRails = settings.showRails,
                 onTap = {
                     if (finished) index = 0

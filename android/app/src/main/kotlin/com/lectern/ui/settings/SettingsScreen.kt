@@ -242,6 +242,22 @@ fun SettingsScreen(vm: LecternViewModel, onBack: () -> Unit) {
                 ) { style -> vm.updateSettings { it.copy(pivotStyle = style) } }
             }
 
+            if (settings.pivotStyle == PivotStyle.Colour) {
+                item {
+                    SliderRow(
+                        title = "Pivot shade",
+                        value = shadeLabel(settings.pivotShade),
+                        sliderValue = settings.pivotShade,
+                        range = -0.7f..0.7f,
+                        steps = 13,
+                        description = "Darkens or lightens the marked letter against " +
+                            "whatever colour the theme gives it.",
+                    ) { shade ->
+                        vm.updateSettings { it.copy(pivotShade = (shade * 10).roundToInt() / 10f) }
+                    }
+                }
+            }
+
             item {
                 SwitchRow(
                     title = "Reading rails",
@@ -555,6 +571,16 @@ private fun InfoRow(title: String, body: String) {
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+    }
+}
+
+/** "20% darker", "theme colour", "40% lighter". */
+private fun shadeLabel(shade: Float): String {
+    val percent = (kotlin.math.abs(shade) * 100).roundToInt()
+    return when {
+        percent == 0 -> "theme colour"
+        shade < 0 -> "$percent% darker"
+        else -> "$percent% lighter"
     }
 }
 

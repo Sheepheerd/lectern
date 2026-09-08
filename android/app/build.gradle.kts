@@ -27,8 +27,8 @@ android {
         applicationId = "com.lectern"
         minSdk = 26
         targetSdk = 36
-        versionCode = (findProperty("appVersionCode") as String?)?.toInt() ?: 1
-        versionName = (findProperty("appVersion") as String?) ?: "0.1.0"
+        versionCode = (findProperty("appVersionCode") as String?)?.toInt() ?: 101
+        versionName = (findProperty("appVersion") as String?) ?: "0.1.1"
     }
 
     signingConfigs {

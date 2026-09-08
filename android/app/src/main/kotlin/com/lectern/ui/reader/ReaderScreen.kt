@@ -6,10 +6,14 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,7 +25,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.Notes
@@ -58,10 +61,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -70,6 +78,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lectern.core.ReaderEngine
 import com.lectern.core.StopReason
+import com.lectern.core.Token
 import com.lectern.core.sentenceStartAfter
 import com.lectern.core.sentenceStartBefore
 import com.lectern.data.Bookmark as SavedBookmark
@@ -221,6 +230,7 @@ fun ReaderScreen(
                 font = settings.font,
                 wordSize = settings.wordSize,
                 pivotStyle = settings.pivotStyle,
+                pivotShade = settings.pivotShade,
                 showRails = settings.showRails,
                 tapZones = settings.tapZones,
                 holdToPeek = settings.holdToPeek,
@@ -608,8 +618,7 @@ private fun BookmarkList(vm: LecternViewModel, onJump: (Int) -> Unit) {
 @Composable
 private fun ParagraphSheet(vm: LecternViewModel, onPick: (Int) -> Unit) {
     val engine = vm.engine
-    val token = engine.currentToken
-    val para = token?.let { vm.paragraphs.getOrNull(it.para) }
+    val para = engine.currentToken?.let { vm.paragraphs.getOrNull(it.para) }
 
     Column(
         modifier = Modifier
@@ -624,26 +633,21 @@ private fun ParagraphSheet(vm: LecternViewModel, onPick: (Int) -> Unit) {
             Text("No book loaded.", style = MaterialTheme.typography.bodyMedium)
             return@Column
         }
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            for (i in para.start until para.start + para.count) {
-                val word = engine.tokens.getOrNull(i) ?: continue
-                val here = i == engine.index
-                Text(
-                    text = word.text,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = if (here) MaterialTheme.colorScheme.onPrimaryContainer
-                    else MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(4.dp))
-                        .background(
-                            if (here) MaterialTheme.colorScheme.primaryContainer
-                            else Color.Transparent
-                        )
-                        .clickable { onPick(i) }
-                        .padding(horizontal = 2.dp),
-                )
-            }
-        }
+        ParagraphText(
+            tokens = engine.tokens,
+            paragraphStart = para.start,
+            paragraphCount = para.count,
+            current = engine.index,
+            currentSpan = SpanStyle(
+                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                background = MaterialTheme.colorScheme.primaryContainer,
+            ),
+            color = MaterialTheme.colorScheme.onSurface,
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(max = 420.dp),
+            onPick = onPick,
+        )
     }
 }
 
@@ -659,19 +663,127 @@ private fun PeekOverlay(vm: LecternViewModel) {
             .padding(32.dp),
         verticalArrangement = Arrangement.Center,
     ) {
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            for (i in para.start until para.start + para.count) {
-                val word = engine.tokens.getOrNull(i) ?: continue
-                val here = i == engine.index
-                Text(
-                    text = word.text,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = if (here) MaterialTheme.colorScheme.primary
-                    else MaterialTheme.colorScheme.inverseOnSurface,
-                )
-            }
-        }
+        ParagraphText(
+            tokens = engine.tokens,
+            paragraphStart = para.start,
+            paragraphCount = para.count,
+            current = engine.index,
+            currentSpan = SpanStyle(color = MaterialTheme.colorScheme.primary),
+            color = MaterialTheme.colorScheme.inverseOnSurface,
+            modifier = Modifier.fillMaxWidth(),
+        )
     }
+}
+
+/**
+ * A paragraph as one run of text rather than one composable per word. A page of
+ * PDF prose can reflow into a paragraph thousands of words long; laying that out
+ * as separate widgets janks the sheet and leaves it unscrollable. Here the words
+ * are spans in a single string, taps map back to a word through the text layout,
+ * and a window around the current word keeps even a runaway paragraph cheap.
+ */
+@Composable
+private fun ParagraphText(
+    tokens: List<Token>,
+    paragraphStart: Int,
+    paragraphCount: Int,
+    current: Int,
+    currentSpan: SpanStyle,
+    color: Color,
+    modifier: Modifier = Modifier,
+    onPick: ((Int) -> Unit)? = null,
+) {
+    val window = remember(tokens, paragraphStart, paragraphCount, current, currentSpan) {
+        buildParagraphWindow(tokens, paragraphStart, paragraphCount, current, currentSpan)
+    }
+    if (window.text.isEmpty()) return
+
+    var layout by remember(window) { mutableStateOf<TextLayoutResult?>(null) }
+    val scroll = rememberScrollState()
+
+    // Open on the word the reader is actually on, not at the top of a wall.
+    LaunchedEffect(layout, window) {
+        val result = layout ?: return@LaunchedEffect
+        val offset = window.offsetOfCurrent ?: return@LaunchedEffect
+        val top = runCatching { result.getBoundingBox(offset).top }.getOrNull() ?: return@LaunchedEffect
+        scroll.animateScrollTo((top - 80f).toInt().coerceAtLeast(0))
+    }
+
+    Text(
+        text = window.text,
+        style = MaterialTheme.typography.bodyLarge,
+        color = color,
+        onTextLayout = { layout = it },
+        // The scroller sits inside the tap handler, not the other way round: a
+        // tap detector nearest the pointer swallows the drag and the sheet ends
+        // up unscrollable. Taps fall through to the outer handler, which has to
+        // add the scroll offset to land in the text's own coordinates.
+        modifier = modifier
+            .then(
+                if (onPick == null) Modifier else Modifier.pointerInput(window) {
+                    detectTapGestures { position ->
+                        val result = layout ?: return@detectTapGestures
+                        val inText = position.copy(y = position.y + scroll.value)
+                        window.wordAt(result.getOffsetForPosition(inText))?.let(onPick)
+                    }
+                }
+            )
+            .verticalScroll(scroll),
+    )
+}
+
+/** The rendered slice of a paragraph, and how its characters map back to words. */
+private class ParagraphWindow(
+    val text: AnnotatedString,
+    /** Character offset each word starts at, parallel to [firstWord]. */
+    private val wordStarts: IntArray,
+    private val firstWord: Int,
+    val offsetOfCurrent: Int?,
+) {
+    fun wordAt(offset: Int): Int? {
+        if (wordStarts.isEmpty()) return null
+        val found = wordStarts.binarySearch(offset)
+        val slot = if (found >= 0) found else (-found - 2).coerceAtLeast(0)
+        return firstWord + slot
+    }
+}
+
+/** How much of a long paragraph is worth drawing on either side of the reader. */
+private const val WORDS_BEHIND = 250
+private const val WORDS_AHEAD = 450
+
+private fun buildParagraphWindow(
+    tokens: List<Token>,
+    paragraphStart: Int,
+    paragraphCount: Int,
+    current: Int,
+    currentSpan: SpanStyle,
+): ParagraphWindow {
+    val paragraphEnd = (paragraphStart + paragraphCount).coerceAtMost(tokens.size)
+    if (paragraphStart >= paragraphEnd) {
+        return ParagraphWindow(AnnotatedString(""), IntArray(0), paragraphStart, null)
+    }
+    val anchor = current.coerceIn(paragraphStart, paragraphEnd - 1)
+    val from = maxOf(paragraphStart, anchor - WORDS_BEHIND)
+    val to = minOf(paragraphEnd, anchor + WORDS_AHEAD)
+
+    val starts = IntArray(to - from)
+    var offsetOfCurrent: Int? = null
+    val text = buildAnnotatedString {
+        if (from > paragraphStart) append("… ")
+        for (i in from until to) {
+            starts[i - from] = length
+            if (i == current) {
+                offsetOfCurrent = length
+                withStyle(currentSpan) { append(tokens[i].text) }
+            } else {
+                append(tokens[i].text)
+            }
+            if (i < to - 1) append(' ')
+        }
+        if (to < paragraphEnd) append(" …")
+    }
+    return ParagraphWindow(text, starts, from, offsetOfCurrent)
 }
 
 private fun bookmarkMeta(vm: LecternViewModel, mark: SavedBookmark): String {

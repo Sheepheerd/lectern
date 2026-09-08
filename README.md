@@ -101,7 +101,7 @@ The web app is live at **[heerd.dev/lectern](https://heerd.dev/lectern/)**, depl
 
 A native Kotlin app: Jetpack Compose, Material 3, Material You. It shares the design and the algorithms with the web app; the code is its own. Three screens on one back stack: shelf, reader, settings. Books also arrive by "open with", by share, or as a link to an article.
 
-51 unit tests cover the parts that can be got wrong quietly: sentence-end detection, pivot placement, chunking, pacing, PDF re-flow, EPUB href resolution, DOCX and FB2 parsing, article extraction, and shelf ordering.
+57 unit tests cover the parts that can be got wrong quietly: sentence-end detection, pivot placement, chunking, pacing, PDF re-flow, EPUB href resolution, DOCX and FB2 parsing, article extraction, shelf ordering, and pivot colour shading.
 
 ## Privacy
 

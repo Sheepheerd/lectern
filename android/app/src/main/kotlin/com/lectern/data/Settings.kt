@@ -81,6 +81,8 @@ data class AppSettings(
     val font: ReadingFont = ReadingFont.Mono,
     val wordSize: WordSize = WordSize.Medium,
     val pivotStyle: PivotStyle = PivotStyle.Colour,
+    /** Lightens (+) or darkens (-) the pivot letter, -1f..1f, 0f = theme colour. */
+    val pivotShade: Float = 0f,
     val showRails: Boolean = true,
     /** The sentence you're inside, dimmed, under the word. */
     val contextLine: Boolean = false,
@@ -135,6 +137,7 @@ class Settings(context: Context) {
         font = enumOr("font", ReadingFont.Mono),
         wordSize = enumOr("wordSize", WordSize.Medium),
         pivotStyle = enumOr("pivotStyle", PivotStyle.Colour),
+        pivotShade = prefs.getFloat("pivotShade", 0f),
         showRails = prefs.getBoolean("showRails", true),
         contextLine = prefs.getBoolean("contextLine", false),
         tapZones = prefs.getBoolean("tapZones", false),
@@ -168,6 +171,7 @@ class Settings(context: Context) {
             .putString("font", next.font.name)
             .putString("wordSize", next.wordSize.name)
             .putString("pivotStyle", next.pivotStyle.name)
+            .putFloat("pivotShade", next.pivotShade)
             .putBoolean("showRails", next.showRails)
             .putBoolean("contextLine", next.contextLine)
             .putBoolean("tapZones", next.tapZones)

@@ -35,6 +35,7 @@ import com.lectern.data.PivotStyle
 import com.lectern.data.ReadingFont
 import com.lectern.data.WordSize
 import com.lectern.ui.theme.family
+import com.lectern.ui.theme.pivotColor
 import kotlinx.coroutines.withTimeoutOrNull
 import kotlin.math.abs
 
@@ -52,6 +53,7 @@ fun WordStage(
     font: ReadingFont = ReadingFont.Mono,
     wordSize: WordSize = WordSize.Medium,
     pivotStyle: PivotStyle = PivotStyle.Colour,
+    pivotShade: Float = 0f,
     showRails: Boolean = true,
     tapZones: Boolean = false,
     holdToPeek: Boolean = false,
@@ -135,6 +137,7 @@ fun WordStage(
             PivotWord(
                 chunk = chunk,
                 pivotStyle = pivotStyle,
+                pivotShade = pivotShade,
                 style = MaterialTheme.typography.displayLarge.copy(
                     fontFamily = font.family(),
                     fontSize = fontSize,
@@ -153,6 +156,7 @@ fun WordStage(
 private fun PivotWord(
     chunk: Chunk?,
     pivotStyle: PivotStyle,
+    pivotShade: Float,
     style: TextStyle,
     modifier: Modifier = Modifier,
 ) {
@@ -161,7 +165,8 @@ private fun PivotWord(
     val pivot = if (orp < text.length) text[orp].toString() else ""
 
     val pivotStyleApplied = when (pivotStyle) {
-        PivotStyle.Colour -> style.copy(color = MaterialTheme.colorScheme.primary)
+        PivotStyle.Colour ->
+            style.copy(color = pivotColor(MaterialTheme.colorScheme.primary, pivotShade))
         PivotStyle.Underline -> style.copy(textDecoration = TextDecoration.Underline)
         PivotStyle.Bold -> style.copy(fontWeight = FontWeight.Bold)
         PivotStyle.None -> style

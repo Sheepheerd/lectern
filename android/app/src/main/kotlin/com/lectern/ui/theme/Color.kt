@@ -245,3 +245,14 @@ fun paletteScheme(palette: Palette, dark: Boolean): ColorScheme = when (palette)
     Palette.Midnight -> if (dark) MidnightDark else MidnightLight
     Palette.Ember -> if (dark) EmberDark else EmberLight
 }.scheme()
+
+/**
+ * The pivot letter's colour: the theme's accent, pulled toward white or black
+ * so it can be read against any palette, wallpaper or ambient light. 0f is the
+ * accent untouched.
+ */
+fun pivotColor(base: Color, shade: Float): Color = when {
+    shade > 0f -> lerp(base, Color.White, shade.coerceAtMost(1f))
+    shade < 0f -> lerp(base, Color.Black, (-shade).coerceAtMost(1f))
+    else -> base
+}
