@@ -1,0 +1,14 @@
+*.iml
+.gradle/
+local.properties
+.idea/
+.DS_Store
+build/
+captures/
+.externalNativeBuild/
+.cxx/
+
+# Signing material stays out of git.
+keystore.properties
+*.jks
+*.keystore

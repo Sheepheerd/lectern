@@ -1,0 +1,76 @@
+name: Release the Android app
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to build, without the v (e.g. 0.1.1)"
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Work out the version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version="${{ inputs.version }}"
+          else
+            version="${GITHUB_REF_NAME#v}"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          # versionCode has to rise with every release: 1.2.3 -> 10203.
+          echo "code=$(echo "$version" | awk -F. '{printf "%d", $1*10000 + $2*100 + $3}')" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Restore the signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "No KEYSTORE_BASE64 secret. The APK would be unsigned and could not be installed." >&2
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/release.jks"
+
+      - name: Build the APK
+        working-directory: android
+        env:
+          KEYSTORE_FILE: ${{ runner.temp }}/release.jks
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          ./gradlew :app:testDebugUnitTest :app:assembleRelease \
+            -PappVersion=${{ steps.version.outputs.version }} \
+            -PappVersionCode=${{ steps.version.outputs.code }}
+
+      - name: Name the APK after the version
+        run: |
+          mkdir -p dist
+          cp android/app/build/outputs/apk/release/app-release.apk \
+             "dist/lectern-${{ steps.version.outputs.version }}.apk"
+
+      - name: Publish the release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Lectern ${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          files: dist/lectern-${{ steps.version.outputs.version }}.apk

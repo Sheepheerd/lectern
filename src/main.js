@@ -229,7 +229,7 @@ function showParagraph() {
   const token = reader.tokens[reader.index];
   if (!token) return;
   reader.pause();
-  openOverlay("Where you are");
+  openOverlay("Current paragraph");
   const para = paragraphs[token.para];
   const p = document.createElement("p");
   p.className = "para-text";
