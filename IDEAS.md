@@ -3,6 +3,11 @@
 Things deliberately left out, kept here so they aren't lost. The first one is
 the big one.
 
+## Audio Books
+
+Somehow integrate audio books to also be an option the user can play from. Maybe
+implement the AI reading of certain books?
+
 ## The trainer
 
 A reading coach built into Lectern: it works out how fast you actually read,
@@ -64,7 +69,6 @@ The groundwork the trainer needs, useful on its own:
   killing the process mid-book.
 - A Quick Settings tile to resume.
 - Text-to-speech in sync with the flashing words, for hard material.
-- Wear OS: pace and pause on the wrist.
 
 ## Elsewhere on the shelf
 
