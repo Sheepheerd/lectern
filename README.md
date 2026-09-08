@@ -27,7 +27,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/branding/web.png" alt="Lectern on Android">
+  <img src="docs/screenshots/web.png" alt="Lectern on Android">
 </p>
 
 ---
