@@ -72,6 +72,15 @@ class ReaderEngine(private val scope: CoroutineScope) {
     private var runStartIndex = 0
     private var runStartedAt = 0L
 
+    /**
+     * Where the reader actually was when this run began, before [rewindWords]
+     * stepped back from it. A chapter boundary at or behind that point has
+     * already been read past, so crossing it again must not stop playback —
+     * otherwise starting a chapter from the menu, or resuming after an
+     * automatic stop, would stop on the spot and never get anywhere.
+     */
+    private var runOriginIndex = 0
+
     val currentToken: Token? get() = tokens.getOrNull(index)
 
     /** The words on screen right now: one, or a chunk of up to three. */
@@ -135,7 +144,9 @@ class ReaderEngine(private val scope: CoroutineScope) {
         if (playing || tokens.isEmpty()) return
         if (index >= tokens.lastIndex && tokens.size > 1) {
             index = 0 // finished: replay
-        } else if (index > 0) {
+        }
+        runOriginIndex = index
+        if (index > 0) {
             index = (index - rewindWords).coerceAtLeast(0)
         }
         stoppedBecause = StopReason.None
@@ -158,6 +169,7 @@ class ReaderEngine(private val scope: CoroutineScope) {
         stoppedBecause = StopReason.None
         if (playing) {
             runStartIndex = index
+            runOriginIndex = index
             job?.cancel()
             startLoop()
         }
@@ -201,7 +213,7 @@ class ReaderEngine(private val scope: CoroutineScope) {
                     stop(StopReason.Break)
                     break
                 }
-                if (stopAtChapterEnd && next != runStartIndex && next in chapterStarts) {
+                if (stopAtChapterEnd && next > runOriginIndex && next in chapterStarts) {
                     index = next
                     stop(StopReason.ChapterEnd)
                     break

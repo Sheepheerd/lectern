@@ -10,6 +10,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.cancel
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -144,6 +145,85 @@ class ReaderEngineTest {
         engine.seek(tokens.lastIndex)
         engine.play() // replays from the top rather than sitting at the end
         assertEquals(0, engine.index)
+        assertEquals(StopReason.None, engine.stoppedBecause)
+        engine.pause()
+    }
+
+    // ---------- stopping at chapter ends ----------
+
+    /** Three chapters of five words each: starts at 0, 5 and 10. */
+    private fun threeChapters(): ReaderEngine {
+        val book = tokenize(
+            listOf(
+                Section("One", "Alpha bravo charlie delta echo"),
+                Section("Two", "Foxtrot golf hotel india juliett"),
+                Section("Three", "Kilo lima mike november oscar"),
+            )
+        )
+        engine.load(book.tokens)
+        engine.chapterStarts = book.chapters.map { it.start }
+        engine.stopAtChapterEnd = true
+        return engine
+    }
+
+    @Test
+    fun `chapter starts are where expected`() {
+        threeChapters()
+        assertEquals(listOf(0, 5, 10), engine.chapterStarts)
+    }
+
+    @Test
+    fun `reading into the next chapter stops there`() {
+        threeChapters()
+        engine.rewindWords = 0
+        engine.seek(4) // last word of chapter one
+        engine.play()
+        assertEquals(StopReason.ChapterEnd, engine.stoppedBecause)
+        assertEquals(5, engine.index)
+        assertFalse(engine.playing)
+    }
+
+    /**
+     * Jumping to a chapter and pressing play used to stop on the spot: the
+     * rewind stepped back over the chapter start, so the first words read
+     * crossed it again and looked like the end of a chapter.
+     */
+    @Test
+    fun `starting at a chapter start does not stop on the spot`() {
+        threeChapters()
+        engine.rewindWords = 1
+        engine.seek(5) // first word of chapter two, chosen from the menu
+        engine.play()
+        assertTrue("playback should carry on into the chapter", engine.playing)
+        assertEquals(StopReason.None, engine.stoppedBecause)
+        engine.pause()
+    }
+
+    /** The same trap on the way out of an automatic stop. */
+    @Test
+    fun `resuming after a chapter end carries on into the next chapter`() {
+        threeChapters()
+        engine.rewindWords = 0
+        engine.seek(4)
+        engine.play()
+        assertEquals(StopReason.ChapterEnd, engine.stoppedBecause)
+
+        engine.rewindWords = 1
+        engine.play()
+        assertTrue("resuming should not stop at the boundary again", engine.playing)
+        assertEquals(StopReason.None, engine.stoppedBecause)
+        engine.pause()
+    }
+
+    /** A boundary already behind the reader must not stop them a second time. */
+    @Test
+    fun `a chapter start just behind the reader does not stop playback`() {
+        threeChapters()
+        engine.rewindWords = 3
+        engine.seek(6) // a word into chapter two, rewinding back into chapter one
+        engine.play()
+        assertEquals(3, engine.index)
+        assertTrue(engine.playing)
         assertEquals(StopReason.None, engine.stoppedBecause)
         engine.pause()
     }
