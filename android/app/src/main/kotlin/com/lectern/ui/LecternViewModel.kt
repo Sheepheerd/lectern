@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.lectern.core.BookCache
 import com.lectern.core.Chapter
 import com.lectern.core.Document
 import com.lectern.core.Paragraph
@@ -62,6 +63,13 @@ class LecternViewModel(app: Application) : AndroidViewModel(app) {
     var importing by mutableStateOf(false)
         private set
 
+    /** Set while a book's text is being read off disk and tokenized. */
+    var loading by mutableStateOf(false)
+        private set
+
+    /** The last book tokenized, so returning to it costs nothing. */
+    private val cache = BookCache()
+
     /**
      * A book the reader should be sent to: a fresh import, or one asked for by
      * a launcher shortcut. Held as state rather than an event so it survives
@@ -90,8 +98,14 @@ class LecternViewModel(app: Application) : AndroidViewModel(app) {
         engine.stopAtChapterEnd = s.stopAtChapterEnd
     }
 
+    /**
+     * Publishing shortcuts is a round trip to the system server, so it happens
+     * away from the main thread — nothing on screen is waiting for it.
+     */
     private fun refreshShortcuts() {
-        updateBookShortcuts(getApplication(), library.shelf.value)
+        val app = getApplication<Application>()
+        val shelf = library.shelf.value
+        viewModelScope.launch(Dispatchers.Default) { updateBookShortcuts(app, shelf) }
     }
 
     // ---------- importing ----------
@@ -173,20 +187,40 @@ class LecternViewModel(app: Application) : AndroidViewModel(app) {
 
     // ---------- reading ----------
 
-    /** Loads [bookId] into the engine. Returns false if its text is gone. */
-    fun open(bookId: String): Boolean {
+    /**
+     * Loads [bookId] into the engine. Returns false if its text is gone.
+     *
+     * Reading a book's JSON and tokenizing it is far too slow to sit on the
+     * main thread, so it doesn't: the reader shows [loading] while it happens.
+     * A book that is already in the [cache] skips all of it and opens at once,
+     * which is what going back and forth with the shelf does.
+     */
+    suspend fun open(bookId: String): Boolean {
         if (current?.id == bookId && engine.tokens.isNotEmpty()) return true
+        // The book being left keeps its place before anything else moves.
+        rememberPosition()
         val entry = library.entry(bookId) ?: return false
-        val sections = library.sections(entry)
-        if (sections == null) {
+
+        val book = cache.get(bookId) ?: run {
+            clearBook()
+            loading = true
+            try {
+                withContext(Dispatchers.Default) {
+                    library.sections(entry)?.let { tokenize(it) }
+                }
+            } finally {
+                loading = false
+            }
+        }
+        if (book == null) {
             _messages.tryEmit("\"${entry.title}\" is missing its text. Load the file again.")
             return false
         }
-        rememberPosition()
-        val book = tokenize(sections)
+        cache.put(bookId, book)
+
         chapters = book.chapters
         paragraphs = book.paragraphs
-        bookmarks = library.bookmarks(bookId)
+        bookmarks = withContext(Dispatchers.IO) { library.bookmarks(bookId) }
         engine.chapterStarts = book.chapters.map { it.start }
         engine.load(book.tokens, entry.index)
         current = entry
@@ -205,11 +239,17 @@ class LecternViewModel(app: Application) : AndroidViewModel(app) {
     fun closeBook() {
         engine.pause()
         rememberPosition()
+        clearBook()
+    }
+
+    /** Empties the reader. The tokens live on in the [cache] until displaced. */
+    private fun clearBook() {
         current = null
         chapters = emptyList()
         paragraphs = emptyList()
         bookmarks = emptyList()
         engine.chapterStarts = emptyList()
+        engine.load(emptyList())
     }
 
     fun rememberPosition() {
@@ -272,6 +312,7 @@ class LecternViewModel(app: Application) : AndroidViewModel(app) {
 
     fun remove(entry: ShelfEntry) {
         if (current?.id == entry.id) closeBook()
+        cache.forget(entry.id)
         library.remove(entry)
         refreshShortcuts()
     }
@@ -305,6 +346,7 @@ class LecternViewModel(app: Application) : AndroidViewModel(app) {
                 _messages.tryEmit("That didn't look like a Lectern backup")
             } else {
                 closeBook()
+                cache.clear()
                 refreshShortcuts()
                 _messages.tryEmit("Restored $books ${if (books == 1) "book" else "books"}")
             }

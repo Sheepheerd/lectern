@@ -2,6 +2,7 @@ package com.lectern
 
 import com.lectern.core.Punct
 import com.lectern.core.Section
+import com.lectern.core.endsSentence
 import com.lectern.core.orpIndex
 import com.lectern.core.reflow
 import com.lectern.core.resolvePath
@@ -55,6 +56,30 @@ class TokenizeTest {
         assertEquals(Punct.CLAUSE, tokens[0].punct)
         assertEquals(Punct.CLAUSE, tokens[1].punct)
         assertEquals(Punct.SENTENCE, tokens[2].punct)
+    }
+
+    /**
+     * Sentence and clause marks are only looked for on words that end in
+     * punctuation. These are the cases that sit either side of that line.
+     */
+    @Test
+    fun `punctuation behind a closing quote or bracket still counts`() {
+        val tokens = tokenize(
+            listOf(Section("", "He said \u201cgo home.\u201d She left (quietly,) and stayed. Plain word"))
+        ).tokens
+        assertEquals(Punct.SENTENCE, tokens.first { it.text == "home.\u201d" }.punct)
+        assertEquals(Punct.CLAUSE, tokens.first { it.text == "(quietly,)" }.punct)
+        assertEquals(Punct.SENTENCE, tokens.first { it.text == "stayed." }.punct)
+        assertEquals(Punct.NONE, tokens.first { it.text == "Plain" }.punct)
+        assertEquals(Punct.NONE, tokens.first { it.text == "word" }.punct)
+    }
+
+    @Test
+    fun `a word with no punctuation never ends a sentence or clause`() {
+        for (word in listOf("word", "1999", "caf\u00e9", "co-operate", "O'Brien", "\u201copen")) {
+            assertFalse(word, endsSentence(word, null))
+            assertEquals(word, Punct.NONE, tokenize(listOf(Section("", "$word next"))).tokens[0].punct)
+        }
     }
 
     @Test

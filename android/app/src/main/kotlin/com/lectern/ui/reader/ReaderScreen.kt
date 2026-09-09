@@ -10,6 +10,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -39,6 +40,7 @@ import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
@@ -106,7 +108,7 @@ fun ReaderScreen(
         if (!vm.open(bookId)) onBack()
     }
 
-    val title = vm.current?.title.orEmpty()
+    val title = if (vm.loading) "" else vm.current?.title.orEmpty()
 
     // The chrome recedes while reading; the word is the only bright thing.
     val chromeAlpha by animateFloatAsState(
@@ -224,28 +226,38 @@ fun ReaderScreen(
         },
     ) { padding ->
         val stage = @Composable { modifier: Modifier ->
-            WordStage(
-                chunk = engine.currentChunk,
-                modifier = modifier,
-                font = settings.font,
-                wordSize = settings.wordSize,
-                pivotStyle = settings.pivotStyle,
-                pivotShade = settings.pivotShade,
-                showRails = settings.showRails,
-                tapZones = settings.tapZones,
-                holdToPeek = settings.holdToPeek,
-                onTap = { tap ->
-                    when (tap) {
-                        StageTap.Toggle -> engine.toggle()
-                        StageTap.Previous -> engine.previousSentence()
-                        StageTap.Next -> engine.nextSentence()
-                    }
-                },
-                onSpeed = { faster ->
-                    vm.nudgeWpm(if (faster) ReaderEngine.WPM_STEP else -ReaderEngine.WPM_STEP)
-                },
-                onPeek = { peeking = it },
-            )
+            // A book not yet in memory takes a moment to read and tokenize.
+            // Better a quiet turning circle than a stage with nothing on it.
+            if (vm.loading) {
+                Box(modifier = modifier, contentAlignment = Alignment.Center) {
+                    CircularProgressIndicator(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            } else {
+                WordStage(
+                    chunk = engine.currentChunk,
+                    modifier = modifier,
+                    font = settings.font,
+                    wordSize = settings.wordSize,
+                    pivotStyle = settings.pivotStyle,
+                    pivotShade = settings.pivotShade,
+                    showRails = settings.showRails,
+                    tapZones = settings.tapZones,
+                    holdToPeek = settings.holdToPeek,
+                    onTap = { tap ->
+                        when (tap) {
+                            StageTap.Toggle -> engine.toggle()
+                            StageTap.Previous -> engine.previousSentence()
+                            StageTap.Next -> engine.nextSentence()
+                        }
+                    },
+                    onSpeed = { faster ->
+                        vm.nudgeWpm(if (faster) ReaderEngine.WPM_STEP else -ReaderEngine.WPM_STEP)
+                    },
+                    onPeek = { peeking = it },
+                )
+            }
         }
 
         val belowStage = @Composable { modifier: Modifier ->

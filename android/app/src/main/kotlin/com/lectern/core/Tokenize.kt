@@ -37,11 +37,20 @@ private val HARD_END = Regex("""[!?…]["')\]»”’]*${'$'}""")
 private val CLAUSE_END = Regex("""[,;:—–]["')\]»”’]*${'$'}""")
 private val TRAILING_CLOSERS = Regex("""["')\]»”’]+${'$'}""")
 private val LEADING_OPENERS = Regex("""^["'(\[«“‘]+""")
-private val TRAILING_PUNCT = Regex("""["'()\[\]«»“”‘’.,;:!?…]+${'$'}""")
 private val SINGLE_CAPITAL = Regex("""^[A-Z]${'$'}""")
 private val DOTTED_INITIALISM = Regex("""^([A-Za-z]\.)+[A-Za-z]?${'$'}""")
 private val OPENS_SENTENCE = Regex("""^["'(\[«“‘]*[A-Z0-9]""")
-private val HAS_DIGIT = Regex("""\d""")
+private const val TRAILING_PUNCT_CHARS = "\"'()[]«»“”‘’.,;:!?…"
+
+/**
+ * Every character any of the patterns above can end on. A word not ending in
+ * one of these cannot close a sentence or a clause, which spares the regexes
+ * on the great majority of words — and there are a lot of words in a book.
+ */
+private const val PUNCT_TAIL = ".!?…,;:—–\"')]»”’"
+
+private fun endsInPunctuation(word: String): Boolean =
+    word.isNotEmpty() && word[word.length - 1] in PUNCT_TAIL
 
 /**
  * Words whose trailing "." is an abbreviation, not a full stop. Titles are
@@ -62,6 +71,7 @@ private val OTHER_ABBREVS = setOf(
 
 /** Does this word actually end a sentence? [nextWord] is null at paragraph end. */
 internal fun endsSentence(word: String, nextWord: String?): Boolean {
+    if (!endsInPunctuation(word)) return false
     if (HARD_END.containsMatchIn(word)) return true
     if (!SENTENCE_END.containsMatchIn(word)) return false
     // Strip surrounding quotes/brackets, then look at the final period.
@@ -84,7 +94,8 @@ internal fun endsSentence(word: String, nextWord: String?): Boolean {
  * center, per Spritz-style RSVP conventions.
  */
 internal fun orpIndex(word: String): Int {
-    val stripped = word.replace(TRAILING_PUNCT, "").length
+    var stripped = word.length
+    while (stripped > 0 && word[stripped - 1] in TRAILING_PUNCT_CHARS) stripped--
     val len = if (stripped == 0) word.length else stripped
     return when {
         len <= 1 -> 0
@@ -99,7 +110,7 @@ private fun baseWeight(word: String): Float {
     var w = 1f
     if (word.length >= 9) w += 0.3f
     if (word.length >= 13) w += 0.3f
-    if (HAS_DIGIT.containsMatchIn(word)) w += 0.5f
+    if (word.any { it in '0'..'9' }) w += 0.5f
     return w
 }
 
@@ -131,14 +142,15 @@ fun tokenize(sections: List<Section>): Book {
             paragraphs += Paragraph(start = tokens.size, count = words.size)
             words.forEachIndexed { i, word ->
                 val isParaEnd = i == words.lastIndex
-                val sentenceEnd = endsSentence(word, words.getOrNull(i + 1))
+                val punctuated = endsInPunctuation(word)
+                val sentenceEnd = punctuated && endsSentence(word, words.getOrNull(i + 1))
                 tokens += Token(
                     text = word,
                     orp = orpIndex(word),
                     weight = baseWeight(word),
                     punct = when {
                         sentenceEnd -> Punct.SENTENCE
-                        CLAUSE_END.containsMatchIn(word) -> Punct.CLAUSE
+                        punctuated && CLAUSE_END.containsMatchIn(word) -> Punct.CLAUSE
                         else -> Punct.NONE
                     },
                     paraEnd = isParaEnd,
